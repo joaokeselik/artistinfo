@@ -25,8 +25,6 @@ public class MusicInfoService {
 
     public MusicInfo getMusicInfo(String mbid) {
         musicInfo = musicBrainzService.fetchMusicBrainzResponse(mbid);
-        musicInfo.setMbid(mbid);
-
         return musicInfo;
     }
 }

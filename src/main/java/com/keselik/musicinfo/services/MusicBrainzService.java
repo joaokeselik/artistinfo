@@ -35,6 +35,7 @@ public class MusicBrainzService {
             handleBadRequest(mbid);
         }
         MusicInfo musicInfo = parseMusicBrainzResponse(response);
+        musicInfo.setMbid(mbid);
         return musicInfo;
     }
 
@@ -45,15 +46,26 @@ public class MusicBrainzService {
     private MusicInfo parseMusicBrainzResponse(MusicBrainzApiResponse response) {
         MusicInfo musicInfo = new MusicInfo();
 
-        //Now I need to use the Title I got from WikiData to fetch the Description from WikiPedia
+        //fetchDescription(response);
+        //fetchAlbums(response);
+
+        //put this below into a method called fetchDescription(); or something like that
         String wikidataIdentifier = findWikidataIdentifier(response);
         String title = wikidataService.findEnglishWikiTitle(wikidataIdentifier);
         System.out.println(title);
+        //Now I need to use the Title I got from WikiData to fetch the Description from WikiPedia
+        //Then
+        //musicInfo.setDescription(description);
 
+        List<Album> albums = parseAlbums(response);
+        musicInfo.setAlbums(albums);
 
-        //TODO: Turn this loop into a method
-        if (response != null && response.getReleaseGroups() != null) {
-            List<Album> albums = new ArrayList<>();
+        return musicInfo;
+    }
+
+    private List<Album> parseAlbums(MusicBrainzApiResponse response) {
+        List<Album> albums = new ArrayList<>();
+        if (response.getReleaseGroups() != null) {
             for (ReleaseGroup releaseGroup : response.getReleaseGroups()) {
                 if (releaseGroup != null) {
                     Album album = new Album(releaseGroup.getTitle(), releaseGroup.getId(), "album-image-url");
@@ -61,9 +73,8 @@ public class MusicBrainzService {
                     albums.add(album);
                 }
             }
-            musicInfo.setAlbums(albums);
         }
-        return musicInfo;
+        return albums;
     }
 
     private String findWikidataIdentifier (MusicBrainzApiResponse response) {
