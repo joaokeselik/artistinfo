@@ -11,6 +11,7 @@ public class MusicBrainzApiResponse {
     @JsonProperty("release-groups")
     private List<ReleaseGroup> releaseGroups;
 
+    @JsonProperty("relations")
     private List<Relation> relations;
 
     // Additional fields as needed

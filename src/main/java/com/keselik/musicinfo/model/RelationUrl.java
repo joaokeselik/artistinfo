@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Url {
+public class RelationUrl {
 
     private String id;
     private String resource;
@@ -13,10 +13,10 @@ public class Url {
 
     // Constructors
 
-    public Url() {
+    public RelationUrl() {
     }
 
-    public Url(String id, String resource) {
+    public RelationUrl(String id, String resource) {
         this.id = id;
         this.resource = resource;
     }

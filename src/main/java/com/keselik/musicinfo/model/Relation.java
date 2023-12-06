@@ -3,13 +3,11 @@ package com.keselik.musicinfo.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Relation {
 
     @JsonProperty("url")
-    private Url url;
+    private RelationUrl url;
 
     @JsonProperty("target-type")
     private String targetType;
@@ -43,12 +41,12 @@ public class Relation {
 
     // Getters and setters
 
-    public Url getUrl() {
+    public RelationUrl getUrl() {
         return url;
     }
 
-    public void setUrl(Url url) {
-        this.url = url;
+    public void setUrl(RelationUrl relationUrl) {
+        this.url = relationUrl;
     }
 
     public String getTargetType() {
