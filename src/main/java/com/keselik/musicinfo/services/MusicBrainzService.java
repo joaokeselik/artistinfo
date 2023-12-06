@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -17,12 +16,12 @@ public class MusicBrainzService {
 
     private static final String MUSICBRAINZ_API_URL = "https://musicbrainz.org/ws/2/artist/";
     private static final String WIKIDATA_RELATION_TYPE = "wikidata";
-    @Autowired
-    private WikidataService wikidataService;
+    private final WikidataService wikidataService;
     private final RestTemplate restTemplate;
     @Autowired
-    public MusicBrainzService(RestTemplate restTemplate) {
+    public MusicBrainzService(RestTemplate restTemplate, WikidataService wikidataService) {
         this.restTemplate = restTemplate;
+        this.wikidataService = wikidataService;
     }
 
     public MusicInfo fetchMusicBrainzResponse(String mbid) {
@@ -34,15 +33,14 @@ public class MusicBrainzService {
             response = restTemplate.getForObject(musicBrainzUrl, MusicBrainzApiResponse.class);
         } catch (HttpClientErrorException.BadRequest e) {
             handleBadRequest(mbid);
-        } catch (RestClientException e) {
-            //TODO: handle this exception
-            e.printStackTrace();
         }
-
         MusicInfo musicInfo = parseMusicBrainzResponse(response);
         return musicInfo;
     }
 
+    private void handleBadRequest(String mbid) {
+        throw new ArtistNotFoundException("Artist not found for MBID: " + mbid);
+    }
 
     private MusicInfo parseMusicBrainzResponse(MusicBrainzApiResponse response) {
         MusicInfo musicInfo = new MusicInfo();
@@ -81,9 +79,6 @@ public class MusicBrainzService {
             }
         }
         return wikidataIdentifier;
-    }
-    private void handleBadRequest(String mbid) {
-        throw new ArtistNotFoundException("Artist not found for MBID: " + mbid);
     }
 
     private String extractWikidataIdentifier(String url) {

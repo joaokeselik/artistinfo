@@ -14,7 +14,7 @@ import java.util.Map;
 public class WikidataService {
 
     private static final String WIKIDATA_API_URL = "https://www.wikidata.org/w/api.php";
-    private static final String ENGLISH_SITE_LINK = "enwiki";
+    private static final String ENGLISH_WIKI_SITE_LINK = "enwiki";
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -27,7 +27,7 @@ public class WikidataService {
         Map<String, WikidataEntity> entities= wikidataApiResponse.getEntities();
         String title = "";
         if (entities != null) {
-            title = entities.get(entityId).getSitelinks().get(ENGLISH_SITE_LINK).getTitle();
+            title = entities.get(entityId).getSitelinks().get(ENGLISH_WIKI_SITE_LINK).getTitle();
         } else {
             handleBadRequest(entityId);
         }
