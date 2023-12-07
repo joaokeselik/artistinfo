@@ -8,9 +8,9 @@
 		<!--  lookup parent from repository  -->
 	</parent>
 	<groupId>com.keselik</groupId>
-	<artifactId>musicinfo</artifactId>
+	<artifactId>artistinfo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>musicinfo</name>
+	<name>artistinfo</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>17</java.version>
@@ -28,6 +28,15 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+			<version>3.1.8</version>
 		</dependency>
 	</dependencies>
 	<build>

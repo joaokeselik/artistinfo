@@ -1,10 +1,10 @@
-package com.keselik.musicinfo.services;
+package com.keselik.artistinfo.services;
 
-import com.keselik.musicinfo.model.*;
+import com.keselik.artistinfo.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,17 +14,23 @@ import java.util.List;
 @Service
 public class MusicBrainzService {
 
+    private ArtistInfo artistInfo;
     private static final String MUSICBRAINZ_API_URL = "https://musicbrainz.org/ws/2/artist/";
     private static final String WIKIDATA_RELATION_TYPE = "wikidata";
     private final WikidataService wikidataService;
+    private final WikipediaService wikipediaService;
     private final RestTemplate restTemplate;
     @Autowired
-    public MusicBrainzService(RestTemplate restTemplate, WikidataService wikidataService) {
+    public MusicBrainzService(RestTemplate restTemplate, WikidataService wikidataService,
+                              WikipediaService wikipediaService,  ArtistInfo artistInfo) {
         this.restTemplate = restTemplate;
         this.wikidataService = wikidataService;
+        this.wikipediaService = wikipediaService;
+        this.artistInfo = artistInfo;
     }
 
-    public MusicInfo fetchMusicBrainzResponse(String mbid) {
+    @Cacheable("artistInfoCache")
+    public ArtistInfo fetchMusicBrainzResponse(String mbid) {
         String musicBrainzUrl = MUSICBRAINZ_API_URL + mbid
                 + "?&fmt=json&inc=url-rels+release-groups";
 
@@ -34,42 +40,38 @@ public class MusicBrainzService {
         } catch (HttpClientErrorException.BadRequest e) {
             handleBadRequest(mbid);
         }
-        MusicInfo musicInfo = parseMusicBrainzResponse(response);
-        musicInfo.setMbid(mbid);
-        return musicInfo;
+
+        artistInfo.setMbid(mbid);
+        artistInfo = parseMusicBrainzResponse(response);
+        return artistInfo;
     }
 
     private void handleBadRequest(String mbid) {
         throw new ArtistNotFoundException("Artist not found for MBID: " + mbid);
     }
 
-    private MusicInfo parseMusicBrainzResponse(MusicBrainzApiResponse response) {
-        MusicInfo musicInfo = new MusicInfo();
+    private ArtistInfo parseMusicBrainzResponse(MusicBrainzApiResponse response) {
+        String description = fetchDescription(response);
+        List<Album> albums = fetchAlbums(response);
+        artistInfo.setDescription(description);
+        artistInfo.setAlbums(albums);
 
-        //fetchDescription(response);
-        //fetchAlbums(response);
-
-        //put this below into a method called fetchDescription(); or something like that
-        String wikidataIdentifier = findWikidataIdentifier(response);
-        String title = wikidataService.findEnglishWikiTitle(wikidataIdentifier);
-        System.out.println(title);
-        //Now I need to use the Title I got from WikiData to fetch the Description from WikiPedia
-        //Then
-        //musicInfo.setDescription(description);
-
-        List<Album> albums = parseAlbums(response);
-        musicInfo.setAlbums(albums);
-
-        return musicInfo;
+        return artistInfo;
     }
 
-    private List<Album> parseAlbums(MusicBrainzApiResponse response) {
+    private String fetchDescription(MusicBrainzApiResponse response) {
+        String wikidataIdentifier = findWikidataIdentifier(response);
+        String title = wikidataService.findEnglishWikiTitle(wikidataIdentifier);
+        return wikipediaService.fetchWikipediaDescription(title);
+    }
+
+    private List<Album> fetchAlbums(MusicBrainzApiResponse response) {
         List<Album> albums = new ArrayList<>();
         if (response.getReleaseGroups() != null) {
             for (ReleaseGroup releaseGroup : response.getReleaseGroups()) {
                 if (releaseGroup != null) {
+                    // TODO: String albumImageUrl = fetchAlbumImageURL();
                     Album album = new Album(releaseGroup.getTitle(), releaseGroup.getId(), "album-image-url");
-                    // You may need to fetch the actual image URL
                     albums.add(album);
                 }
             }
@@ -93,7 +95,7 @@ public class MusicBrainzService {
     }
 
     private String extractWikidataIdentifier(String url) {
-        //TODO: I have to handle the exception properly here and return properly too
+
         try {
             URI uri = new URI(url);
             String path = uri.getPath();
@@ -102,6 +104,7 @@ public class MusicBrainzService {
 
             return path.substring(startIndex, endIndex);
         } catch (URISyntaxException e) {
+            //TODO: I have to handle the exception properly here and return properly too
             e.printStackTrace();
         }
 

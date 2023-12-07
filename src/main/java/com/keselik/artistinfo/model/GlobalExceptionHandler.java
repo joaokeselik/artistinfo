@@ -1,4 +1,4 @@
-package com.keselik.musicinfo.model;
+package com.keselik.artistinfo.model;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

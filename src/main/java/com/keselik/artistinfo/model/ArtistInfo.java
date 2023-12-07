@@ -1,8 +1,12 @@
-package com.keselik.musicinfo.model;
+package com.keselik.artistinfo.model;
+
+import org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-public class MusicInfo {
+@Component
+public class ArtistInfo {
     private String mbid;
     private String description;
     private List<Album> albums;

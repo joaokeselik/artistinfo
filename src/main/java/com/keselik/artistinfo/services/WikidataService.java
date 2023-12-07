@@ -1,11 +1,9 @@
-package com.keselik.musicinfo.services;
+package com.keselik.artistinfo.services;
 
-import ch.qos.logback.core.joran.conditional.ElseAction;
-import com.keselik.musicinfo.model.*;
+import com.keselik.artistinfo.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -35,6 +33,7 @@ public class WikidataService {
         return title;
     }
 
+    @Cacheable("wikidataCache")
     public WikidataApiResponse fetchWikidataResponse(String entityId) {
         String wikidataUrl = WIKIDATA_API_URL +
                 "?action=wbgetentities" +
