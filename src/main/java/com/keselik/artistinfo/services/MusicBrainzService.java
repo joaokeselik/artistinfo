@@ -3,6 +3,7 @@ package com.keselik.artistinfo.services;
 import com.keselik.artistinfo.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -36,6 +37,11 @@ public class MusicBrainzService {
     }
 
     @Cacheable("artistInfoCache")
+    @Async
+    public CompletableFuture<ArtistInfo> fetchMusicBrainzResponseAsync(String mbid) {
+        return CompletableFuture.completedFuture(fetchMusicBrainzResponse(mbid));
+    }
+
     public ArtistInfo fetchMusicBrainzResponse(String mbid) {
         String musicBrainzUrl = MUSICBRAINZ_API_URL + mbid
                 + "?&fmt=json&inc=url-rels+release-groups";
@@ -68,11 +74,14 @@ public class MusicBrainzService {
     }
 
     private String fetchDescription(MusicBrainzApiResponse response) {
+        // String title = wikidataService.findEnglishWikiTitle(response); //TODO: this one looks better
+        //TODO: Maybe I should pass the response variable to the CoverArtService as well
         String wikidataIdentifier = findWikidataIdentifier(response);
         String title = wikidataService.findEnglishWikiTitle(wikidataIdentifier);
         return wikipediaService.fetchWikipediaDescription(title);
     }
 
+    //TODO: maybe these methods should go in the CoverArtService then I would pass response variable to the method, or?
     private List<Album> fetchAlbums(MusicBrainzApiResponse response) {
         if (response.getReleaseGroups() != null) {
             ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(COVERART_MAX_PARALLEL_REQUESTS);
@@ -97,22 +106,7 @@ public class MusicBrainzService {
         return new Album(releaseGroup.getTitle(), releaseGroup.getId(), albumImageUrl);
     }
 
-    /*
-    private List<Album> fetchAlbums(MusicBrainzApiResponse response) {
-        List<Album> albums = new ArrayList<>();
-        if (response.getReleaseGroups() != null) {
-            for (ReleaseGroup releaseGroup : response.getReleaseGroups()) {
-                if (releaseGroup != null) {
-                    String albumImageUrl = coverArtService.fetchAlbumImageURL(releaseGroup.getId());
-                    Album album = new Album(releaseGroup.getTitle(), releaseGroup.getId(), albumImageUrl);
-                    albums.add(album);
-                }
-            }
-        }
-        return albums;
-    }
-    */
-
+    //TODO: Maybe these methods related to wikidata should go in the WikidataService class??
     private String findWikidataIdentifier (MusicBrainzApiResponse response) {
         String wikidataIdentifier = "";
         if (response != null && response.getRelations() != null) {
