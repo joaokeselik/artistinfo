@@ -20,6 +20,7 @@ public class WikidataService {
         this.restTemplate = restTemplate;
     }
 
+    @Cacheable("wikidataCache")
     public String findEnglishWikiTitle(String entityId) {
         WikidataApiResponse wikidataApiResponse = fetchWikidataResponse(entityId);
         Map<String, WikidataEntity> entities= wikidataApiResponse.getEntities();
@@ -33,7 +34,6 @@ public class WikidataService {
         return title;
     }
 
-    @Cacheable("wikidataCache")
     public WikidataApiResponse fetchWikidataResponse(String entityId) {
         String wikidataUrl = WIKIDATA_API_URL +
                 "?action=wbgetentities" +

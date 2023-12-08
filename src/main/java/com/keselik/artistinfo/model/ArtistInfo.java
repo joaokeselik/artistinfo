@@ -1,11 +1,7 @@
 package com.keselik.artistinfo.model;
 
-import org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 
-@Component
 public class ArtistInfo {
     private String mbid;
     private String description;

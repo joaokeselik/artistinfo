@@ -10,23 +10,29 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 @Service
 public class MusicBrainzService {
 
-    private ArtistInfo artistInfo;
     private static final String MUSICBRAINZ_API_URL = "https://musicbrainz.org/ws/2/artist/";
     private static final String WIKIDATA_RELATION_TYPE = "wikidata";
+    private static final int COVERART_MAX_PARALLEL_REQUESTS = 20;
     private final WikidataService wikidataService;
     private final WikipediaService wikipediaService;
+    private final CoverArtService coverArtService;
     private final RestTemplate restTemplate;
     @Autowired
     public MusicBrainzService(RestTemplate restTemplate, WikidataService wikidataService,
-                              WikipediaService wikipediaService,  ArtistInfo artistInfo) {
+                              WikipediaService wikipediaService, CoverArtService coverArtService) {
         this.restTemplate = restTemplate;
         this.wikidataService = wikidataService;
         this.wikipediaService = wikipediaService;
-        this.artistInfo = artistInfo;
+        this.coverArtService = coverArtService;
     }
 
     @Cacheable("artistInfoCache")
@@ -41,8 +47,9 @@ public class MusicBrainzService {
             handleBadRequest(mbid);
         }
 
-        artistInfo.setMbid(mbid);
+        ArtistInfo artistInfo;
         artistInfo = parseMusicBrainzResponse(response);
+        artistInfo.setMbid(mbid);
         return artistInfo;
     }
 
@@ -51,6 +58,7 @@ public class MusicBrainzService {
     }
 
     private ArtistInfo parseMusicBrainzResponse(MusicBrainzApiResponse response) {
+        ArtistInfo artistInfo = new ArtistInfo();
         String description = fetchDescription(response);
         List<Album> albums = fetchAlbums(response);
         artistInfo.setDescription(description);
@@ -66,18 +74,44 @@ public class MusicBrainzService {
     }
 
     private List<Album> fetchAlbums(MusicBrainzApiResponse response) {
+        if (response.getReleaseGroups() != null) {
+            ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(COVERART_MAX_PARALLEL_REQUESTS);
+
+            List<CompletableFuture<Album>> albumFutures = response.getReleaseGroups()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .map(releaseGroup -> CompletableFuture.supplyAsync(() -> fetchAlbum(releaseGroup), executor))
+                    .collect(Collectors.toList());
+
+            return albumFutures
+                    .stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+        }
+        return new ArrayList<>();
+    }
+
+    private Album fetchAlbum(ReleaseGroup releaseGroup) {
+        String albumImageUrl = coverArtService.fetchAlbumImageURL(releaseGroup.getId());
+        return new Album(releaseGroup.getTitle(), releaseGroup.getId(), albumImageUrl);
+    }
+
+    /*
+    private List<Album> fetchAlbums(MusicBrainzApiResponse response) {
         List<Album> albums = new ArrayList<>();
         if (response.getReleaseGroups() != null) {
             for (ReleaseGroup releaseGroup : response.getReleaseGroups()) {
                 if (releaseGroup != null) {
-                    // TODO: String albumImageUrl = fetchAlbumImageURL();
-                    Album album = new Album(releaseGroup.getTitle(), releaseGroup.getId(), "album-image-url");
+                    String albumImageUrl = coverArtService.fetchAlbumImageURL(releaseGroup.getId());
+                    Album album = new Album(releaseGroup.getTitle(), releaseGroup.getId(), albumImageUrl);
                     albums.add(album);
                 }
             }
         }
         return albums;
     }
+    */
 
     private String findWikidataIdentifier (MusicBrainzApiResponse response) {
         String wikidataIdentifier = "";
@@ -95,7 +129,6 @@ public class MusicBrainzService {
     }
 
     private String extractWikidataIdentifier(String url) {
-
         try {
             URI uri = new URI(url);
             String path = uri.getPath();
@@ -105,7 +138,7 @@ public class MusicBrainzService {
             return path.substring(startIndex, endIndex);
         } catch (URISyntaxException e) {
             //TODO: I have to handle the exception properly here and return properly too
-            e.printStackTrace();
+            e.getMessage();
         }
 
         return "";
