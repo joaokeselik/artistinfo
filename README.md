@@ -12,7 +12,9 @@ mvn clean install
 ## Run the application:
 java -jar artistinfo-0.0.1-SNAPSHOT.jar
 
-It will be accessible on the configured IP address and port as specified in the application.properties file.
+The jar file will be available in the target folder.
+
+The application will be accessible on the configured IP address and port as specified in the application.properties file.
 
 ## Url to access the api on localhost:
 http://localhost:8080/api/artistinfo/{mbid} <br/>
