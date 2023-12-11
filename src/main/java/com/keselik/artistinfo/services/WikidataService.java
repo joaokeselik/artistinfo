@@ -86,6 +86,6 @@ public class WikidataService {
     }
 
     private void handleBadURL(String url) {
-        throw new WikidataIdentifierException(String.format("Bad URL for Wikidata: %s", url));
+        throw new WikidataIdentifierException(String.format("Bad URL for Wikidata:" + url));
     }
 }
