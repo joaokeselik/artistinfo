@@ -7,8 +7,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -21,17 +19,16 @@ import java.util.stream.Collectors;
 public class MusicBrainzService {
 
     private static final String MUSICBRAINZ_API_URL = "https://musicbrainz.org/ws/2/artist/";
-    private static final String WIKIDATA_RELATION_TYPE = "wikidata";
     private static final int COVERART_MAX_PARALLEL_REQUESTS = 20;
-    private final WikidataService wikidataService;
     private final WikipediaService wikipediaService;
     private final CoverArtService coverArtService;
     private final RestTemplate restTemplate;
+
     @Autowired
-    public MusicBrainzService(RestTemplate restTemplate, WikidataService wikidataService,
-                              WikipediaService wikipediaService, CoverArtService coverArtService) {
+    public MusicBrainzService(RestTemplate restTemplate,
+                              WikipediaService wikipediaService,
+                              CoverArtService coverArtService) {
         this.restTemplate = restTemplate;
-        this.wikidataService = wikidataService;
         this.wikipediaService = wikipediaService;
         this.coverArtService = coverArtService;
     }
@@ -53,9 +50,17 @@ public class MusicBrainzService {
             handleBadRequest(mbid);
         }
 
-        ArtistInfo artistInfo;
-        artistInfo = parseMusicBrainzResponse(response);
+        return parseMusicBrainzResponse(response, mbid);
+    }
+
+    private ArtistInfo parseMusicBrainzResponse(MusicBrainzApiResponse response, String mbid) {
+        ArtistInfo artistInfo = new ArtistInfo();
+        String description = fetchDescription(response);
+        List<Album> albums = fetchAlbums(response);
+        artistInfo.setDescription(description);
+        artistInfo.setAlbums(albums);
         artistInfo.setMbid(mbid);
+
         return artistInfo;
     }
 
@@ -63,25 +68,10 @@ public class MusicBrainzService {
         throw new ArtistNotFoundException("Artist not found for MBID: " + mbid);
     }
 
-    private ArtistInfo parseMusicBrainzResponse(MusicBrainzApiResponse response) {
-        ArtistInfo artistInfo = new ArtistInfo();
-        String description = fetchDescription(response);
-        List<Album> albums = fetchAlbums(response);
-        artistInfo.setDescription(description);
-        artistInfo.setAlbums(albums);
-
-        return artistInfo;
-    }
-
     private String fetchDescription(MusicBrainzApiResponse response) {
-        // String title = wikidataService.findEnglishWikiTitle(response); //TODO: this one looks better
-        //TODO: Maybe I should pass the response variable to the CoverArtService as well
-        String wikidataIdentifier = findWikidataIdentifier(response);
-        String title = wikidataService.findEnglishWikiTitle(wikidataIdentifier);
-        return wikipediaService.fetchWikipediaDescription(title);
+        return wikipediaService.fetchWikipediaDescription(response);
     }
 
-    //TODO: maybe these methods should go in the CoverArtService then I would pass response variable to the method, or?
     private List<Album> fetchAlbums(MusicBrainzApiResponse response) {
         if (response.getReleaseGroups() != null) {
             ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(COVERART_MAX_PARALLEL_REQUESTS);
@@ -106,35 +96,4 @@ public class MusicBrainzService {
         return new Album(releaseGroup.getTitle(), releaseGroup.getId(), albumImageUrl);
     }
 
-    //TODO: Maybe these methods related to wikidata should go in the WikidataService class??
-    private String findWikidataIdentifier (MusicBrainzApiResponse response) {
-        String wikidataIdentifier = "";
-        if (response != null && response.getRelations() != null) {
-            RelationUrl relationUrl;
-            for (Relation relation : response.getRelations()) {
-                if (relation != null && relation.getType().equals(WIKIDATA_RELATION_TYPE)) {
-                    relationUrl = relation.getUrl();
-                    wikidataIdentifier = extractWikidataIdentifier(relationUrl.getResource());
-                    return wikidataIdentifier;
-                }
-            }
-        }
-        return wikidataIdentifier;
-    }
-
-    private String extractWikidataIdentifier(String url) {
-        try {
-            URI uri = new URI(url);
-            String path = uri.getPath();
-            int startIndex = path.lastIndexOf("/wiki/") + "/wiki/".length();
-            int endIndex = path.length();
-
-            return path.substring(startIndex, endIndex);
-        } catch (URISyntaxException e) {
-            //TODO: I have to handle the exception properly here and return properly too
-            e.getMessage();
-        }
-
-        return "";
-    }
 }

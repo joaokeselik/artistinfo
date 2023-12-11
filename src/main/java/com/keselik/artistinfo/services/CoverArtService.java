@@ -27,7 +27,12 @@ public class CoverArtService {
 
         try {
             CoverArtApiResponse response = restTemplate.getForObject(coverArtUrl, CoverArtApiResponse.class);
-            return response.getImages().get(0).getImage();
+
+            if (response != null && response.getImages() != null && !response.getImages().isEmpty()) {
+                return response.getImages().get(0).getImage();
+            } else {
+                return IMAGE_NOT_FOUND;
+            }
         } catch (HttpClientErrorException ex) {
             return IMAGE_NOT_FOUND;
         }

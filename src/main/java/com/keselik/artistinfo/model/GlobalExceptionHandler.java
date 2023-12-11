@@ -36,8 +36,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error: " + ex.getMessage());
     }
 
-    @ExceptionHandler(URISyntaxException.class)
-    public ResponseEntity<String> handleURISyntaxException(URISyntaxException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bad Request: " + ex.getMessage());
+    @ExceptionHandler(WikidataIdentifierException.class)
+    public ResponseEntity<String> handleWikidataIdentifierException(WikidataIdentifierException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }

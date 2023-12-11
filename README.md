@@ -1,11 +1,27 @@
-The fields attributes, attribute-ids, attribute-values were ignored in the class Relation.
-The fields secondary-types, secondary-type-ids were ignored in the class ReleaseGroup.
 
-In order to improve performance implemented caching, connection pool for the application and async processing for the coverart request.
-The creation of caches can be verified with http://localhost:8080/actuator/caches
+## Description
+The application fetches artist information for a given MusicBrainz Identifier, i.e. mbid.
 
-Logging features are not implemented.
 
-I have to describe instructions for deployment in production here.
-mvn install...
+## Prerequisites
+- Java 
+- Maven 
+
+## Use maven to build a jar file:
+mvn clean install
+
+## Run the application
 java -jar artistinfo.jar
+
+It will be accessible on the configured IP address and port as specified in the application.properties file.
+
+## Url to access the api on localhost:
+http://localhost:8080/api/artistinfo/{mbid} <br/>
+
+Example:<br/>
+http://localhost:8080/api/artistinfo/5b11f4ce-a62d-471e-81fc-a69a8278c7da
+
+## Observations
+- Implemented caching, connection pool and async to improve performance.
+- Logging was not implemented. The exceptions should be logged if logging is implemented. CoverArtNotFoundException was not used, but it could be used to log exceptions in the CoverArtService.
+- Not all errors are handled properly, for example if the underlying APIs are unavailable.
