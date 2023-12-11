@@ -46,7 +46,7 @@ public class MusicBrainzService {
         MusicBrainzApiResponse response = null;
         try {
             response = restTemplate.getForObject(musicBrainzUrl, MusicBrainzApiResponse.class);
-        } catch (HttpClientErrorException.BadRequest e) {
+        } catch (HttpClientErrorException e) {
             handleBadRequest(mbid);
         }
 
