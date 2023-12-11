@@ -15,6 +15,7 @@ public class WikidataService {
     private static final String WIKIDATA_API_URL = "https://www.wikidata.org/w/api.php";
     private static final String ENGLISH_WIKI_SITE_LINK = "enwiki";
     private static final String WIKIDATA_RELATION_TYPE = "wikidata";
+    private static final String WIKI_PATH_PREFIX = "/wiki/";
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -73,7 +74,7 @@ public class WikidataService {
         try {
             URI uri = new URI(url);
             String path = uri.getPath();
-            int startIndex = path.lastIndexOf("/wiki/") + "/wiki/".length();
+            int startIndex = path.lastIndexOf(WIKI_PATH_PREFIX) + WIKI_PATH_PREFIX.length();
             int endIndex = path.length();
 
             return path.substring(startIndex, endIndex);
