@@ -1,5 +1,6 @@
 package com.keselik.artistinfo.services;
 
+import com.keselik.artistinfo.exception.ArtistNotFoundException;
 import com.keselik.artistinfo.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;

@@ -1,5 +1,7 @@
 package com.keselik.artistinfo.services;
 
+import com.keselik.artistinfo.exception.WikidataIdentifierException;
+import com.keselik.artistinfo.exception.WikidataNotFoundException;
 import com.keselik.artistinfo.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
